@@ -1,0 +1,188 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+<body>
+
+<div class="container-fluid" style="padding: 12px 20px 28px;">
+
+    <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+
+    <div class="gcal-wrap">
+        <div class="gcal-toolbar">
+            <button type="button" class="btn-today" id="btnHoy">Hoy</button>
+            <button type="button" class="btn-nav" id="btnPrev" title="Mes anterior">‹</button>
+            <button type="button" class="btn-nav" id="btnNext" title="Mes siguiente">›</button>
+            <h1 class="gcal-title" id="calTitle">Mes</h1>
+            <select class="cmb-profesional" id="cmbProfesional">
+                <option value="">Todos los profesionales</option>
+                <option th:each="pr : ${profesionales}"
+                        th:value="${pr.id}"
+                        th:text="${pr.apellido + ', ' + pr.nombre}"
+                        th:selected="${profesionalSeleccionadoId != null and profesionalSeleccionadoId.equals(pr.id)}">
+                </option>
+            </select>
+        </div>
+
+        <div class="gcal-body">
+            <div class="gcal-main">
+                <div class="gcal-dows">
+                    <div>lun</div>
+                    <div>mar</div>
+                    <div>mié</div>
+                    <div>jue</div>
+                    <div>vie</div>
+                    <div>sáb</div>
+                    <div>dom</div>
+                </div>
+                <div class="gcal-month" id="monthGrid"></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var fechaSeleccionada = /*[[${fechaSeleccionada}]]*/ '';
+    var eventos = /*[[${eventos}]]*/ [];
+    var profesionalFiltro = /*[[${profesionalSeleccionadoId != null ? profesionalSeleccionadoId.toString() : ''}]]*/ '';
+    var urlCalendario = /*[[@{/turnos}]]*/ '/turnos';
+    var urlNuevo = /*[[@{/turnos/nuevo}]]*/ '/turnos/nuevo';
+    var urlEditBase = /*[[@{/turnos/edit/}]]*/ '/turnos/edit/';
+
+    var meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+        'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+    var hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    var selected = fechaSeleccionada ? new Date(fechaSeleccionada + 'T00:00:00') : new Date(hoy);
+    var viewYear = selected.getFullYear();
+    var viewMonth = selected.getMonth();
+
+    function pad(n) {
+        return n < 10 ? '0' + n : '' + n;
+    }
+
+    function toIso(date) {
+        return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+    }
+
+    function queryProfesional() {
+        var id = document.getElementById('cmbProfesional').value;
+        return id ? ('&profesionalId=' + encodeURIComponent(id)) : '';
+    }
+
+    function eventosPorFecha(iso) {
+        var filtro = document.getElementById('cmbProfesional').value;
+        var list = [];
+        for (var i = 0; i < eventos.length; i++) {
+            if (eventos[i].fecha !== iso) {
+                continue;
+            }
+            if (filtro && String(eventos[i].profesionalId) !== String(filtro)) {
+                continue;
+            }
+            list.push(eventos[i]);
+        }
+        return list;
+    }
+
+    function irAFecha(iso) {
+        window.location.href = urlCalendario + '?fecha=' + iso + queryProfesional();
+    }
+
+    function renderMonth() {
+        document.getElementById('calTitle').textContent =
+            meses[viewMonth].charAt(0).toUpperCase() + meses[viewMonth].slice(1) + ' de ' + viewYear;
+
+        var grid = document.getElementById('monthGrid');
+        grid.innerHTML = '';
+
+        var first = new Date(viewYear, viewMonth, 1);
+        var startDow = (first.getDay() + 6) % 7;
+        var startDate = new Date(viewYear, viewMonth, 1 - startDow);
+        var selectedIso = toIso(selected);
+        var todayIso = toIso(hoy);
+
+        for (var i = 0; i < 42; i++) {
+            var date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            var iso = toIso(date);
+
+            var cell = document.createElement('div');
+            cell.className = 'gcal-cell';
+            if (date.getMonth() !== viewMonth) cell.className += ' other-month';
+            if (iso === todayIso) cell.className += ' today';
+            if (iso === selectedIso) cell.className += ' selected';
+
+            var num = document.createElement('div');
+            num.className = 'day-num';
+            num.textContent = date.getDate();
+            cell.appendChild(num);
+
+            var diaEventos = eventosPorFecha(iso);
+            var maxShow = 3;
+            for (var e = 0; e < diaEventos.length && e < maxShow; e++) {
+                var chip = document.createElement('a');
+                chip.className = 'gcal-event estado-' + (diaEventos[e].estado || 'Pendiente');
+                var titulo = diaEventos[e].titulo || 'Turno';
+                var medico = diaEventos[e].medico || '';
+                chip.innerHTML = '<span class="ev-linea">' + titulo + '</span>' +
+                    (medico ? '<span class="ev-linea ev-medico">' + medico + '</span>' : '');
+                chip.title = medico ? (titulo + ' — ' + medico) : titulo;
+                chip.href = urlEditBase + diaEventos[e].id;
+                chip.addEventListener('click', function (ev) {
+                    ev.stopPropagation();
+                });
+                cell.appendChild(chip);
+            }
+            if (diaEventos.length > maxShow) {
+                var more = document.createElement('div');
+                more.className = 'gcal-more';
+                more.textContent = '+' + (diaEventos.length - maxShow) + ' más';
+                cell.appendChild(more);
+            }
+
+            cell.addEventListener('click', (function (f) {
+                return function () {
+                    window.location.href = urlNuevo + '?fecha=' + f;
+                };
+            })(iso));
+
+            grid.appendChild(cell);
+        }
+    }
+
+    document.getElementById('btnPrev').addEventListener('click', function () {
+        viewMonth--;
+        if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+        renderMonth();
+    });
+
+    document.getElementById('btnNext').addEventListener('click', function () {
+        viewMonth++;
+        if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+        renderMonth();
+    });
+
+    document.getElementById('btnHoy').addEventListener('click', function () {
+        irAFecha(toIso(hoy));
+    });
+
+    document.getElementById('cmbProfesional').addEventListener('change', function () {
+        renderMonth();
+    });
+
+    if (profesionalFiltro) {
+        document.getElementById('cmbProfesional').value = profesionalFiltro;
+    }
+
+    renderMonth();
+    /*]]>*/
+</script>
+
+</body>
+</html>

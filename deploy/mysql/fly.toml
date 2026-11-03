@@ -1,0 +1,35 @@
+# Base de datos MySQL 8 para la app GestionTurnos.
+# Se despliega como una app aparte, accesible solo por la red privada de Fly.io.
+#
+# Uso:
+#   fly apps create gestionturnos-db
+#   fly volumes create mysql_data -a gestionturnos-db -r gru -s 3
+#   fly secrets set -a gestionturnos-db MYSQL_ROOT_PASSWORD=... MYSQL_PASSWORD=...
+#   fly deploy -c deploy/mysql/fly.toml --ha=false
+app = "gestionturnos-db"
+primary_region = "gru"
+
+[build]
+  image = "mysql:8.4"
+
+[env]
+  MYSQL_DATABASE = "gestionturnos"
+  MYSQL_USER = "gestionturnos"
+  TZ = "America/Argentina/Buenos_Aires"
+
+# Nombres de tablas sin distinción de mayúsculas/minúsculas (igual que en
+# Windows). Debe quedar fijo al inicializar el volumen: no se puede cambiar
+# después sin recrear la base.
+[processes]
+  app = "--lower-case-table-names=1"
+
+[mounts]
+  source = "mysql_data"
+  destination = "/var/lib/mysql"
+  initial_size = "3gb"
+  # Snapshots automáticos diarios del volumen (retención en días)
+  snapshot_retention = 7
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

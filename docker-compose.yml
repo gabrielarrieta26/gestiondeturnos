@@ -1,0 +1,46 @@
+# Entorno local para probar la imagen Docker antes de desplegar.
+# Uso: docker compose up --build
+# Luego abrir http://localhost:8091/gestionturnos
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: gestionturnos
+      MYSQL_USER: gestionturnos
+      MYSQL_PASSWORD: gestionturnos
+      MYSQL_ROOT_PASSWORD: root
+      TZ: America/Argentina/Buenos_Aires
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: "8091"
+      CONTEXT_PATH: /gestionturnos
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: gestionturnos
+      DB_USER: gestionturnos
+      DB_PASSWORD: gestionturnos
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin1234
+      SESSION_COOKIE_SECURE: "false"
+      JPA_SHOW_SQL: "false"
+      TZ: America/Argentina/Buenos_Aires
+    ports:
+      - "8091:8091"
+
+volumes:
+  mysql_data:

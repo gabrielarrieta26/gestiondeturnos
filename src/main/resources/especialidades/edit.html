@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+    
+    <!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+    <body>
+
+        <div class="container">
+
+            <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+
+            <h2>Especialidad</h2>
+            <div>
+                <form class="form-horizontal" th:object="${entity}" th:action="@{/especialidades}" method="post">
+                    <input type="hidden" th:field="*{id}"/>                                
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Especialidad</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{especialidad}"/>
+                        </div>                       
+                    </div>   
+
+                                        
+                    <div class="row">
+                        <button type="submit" class="btn btn-success">Guardar</button>                        
+                        <a class="btn btn-default" th:href="${'/gestionturnos/especialidades'}">Cancelar</a>
+                    </div>
+                    <h5 style="color:red;" th:text="${message}"></h5>
+                </form>
+            </div>
+
+        </div>
+
+    </body>
+</html>

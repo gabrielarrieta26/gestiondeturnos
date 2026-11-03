@@ -1,0 +1,453 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+<style>
+    .paciente-label-wrap {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        min-height: 40px;
+        margin-bottom: 8px;
+        padding: 8px 12px;
+    }
+    .paciente-nombre { font-weight: 600; margin: 0; }
+    .paciente-doc { color: var(--muted, #6a808a); margin: 0; white-space: nowrap; }
+    .panel-horarios {
+        padding: 14px;
+        min-height: 220px;
+    }
+    .panel-horarios h4 {
+        margin: 0 0 12px;
+        font-size: 1.05rem;
+    }
+    .horario-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        margin-bottom: 6px;
+        background: #fff;
+    }
+    .horario-item .horario-texto { margin: 0; font-weight: normal; flex: 1; }
+    .horario-estado {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        color: #fff;
+    }
+    #modalPaciente .nav-tabs { margin-bottom: 16px; }
+    #modalPaciente .tab-pane { padding-top: 4px; }
+</style>
+
+<body>
+
+<div class="container">
+
+    <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+
+    <br/>
+
+    <div class="row">
+        <div class="col-sm-12">
+            <h2 th:text="${entity.id != null} ? 'Editar turno' : 'Nuevo turno'">Turno</h2>
+        </div>
+    </div>
+
+    <form class="form-horizontal" th:object="${entity}" th:action="@{/turnos}" method="post" id="formTurno">
+        <input type="hidden" th:if="${entity.id != null}" th:field="*{id}"/>
+        <input type="hidden" id="turnoIdActual" th:value="${entity.id}"/>
+
+        <div class="row">
+            <div class="col-sm-7">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Paciente</label>
+                    <div class="col-sm-9">
+                        <input type="hidden" id="pacienteId" name="paciente"
+                               th:value="${pacienteSeleccionado != null ? pacienteSeleccionado.id : ''}" required/>
+                        <div class="paciente-label-wrap">
+                            <p class="paciente-nombre" id="pacienteLabelNombre"
+                               th:text="${pacienteSeleccionado != null ? pacienteSeleccionado.apellido + ', ' + pacienteSeleccionado.nombre : 'Sin paciente seleccionado'}">
+                                Sin paciente seleccionado
+                            </p>
+                            <p class="paciente-doc" id="pacienteLabelDoc"
+                               th:text="${pacienteSeleccionado != null ? ((pacienteSeleccionado.tipoDoc != null ? pacienteSeleccionado.tipoDoc.codigo : '') + ' ' + (pacienteSeleccionado.dni != null ? pacienteSeleccionado.dni : '')) : ''}">
+                            </p>
+                        </div>
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#modalPaciente">
+                            Buscar paciente
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Fecha</label>
+                    <div class="col-sm-9">
+                        <input type="date" class="form-control" id="fecha" name="fecha"
+                               th:value="${entity.fecha != null ? #temporals.format(entity.fecha, 'yyyy-MM-dd') : ''}"
+                               readonly required/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Profesional</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" id="profesional" th:field="*{profesional}" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option th:each="pr : ${profesionales}"
+                                    th:value="${pr.id}"
+                                    th:text="${pr.apellido + ', ' + pr.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Turno General</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" th:field="*{turnoGeneral}" required>
+                            <option value="">-- Seleccionar --</option>
+                            <option th:each="tg : ${turnosGenerales}"
+                                    th:value="${tg.id}"
+                                    th:text="${tg.dia.descrip + ' - ' + tg.horario.descrip}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Obra Social</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" th:field="*{obraSocial}">
+                            <option value="">-- Seleccionar --</option>
+                            <option th:each="os : ${obrassociales}"
+                                    th:value="${os.id}"
+                                    th:text="${os.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Descripción</label>
+                    <div class="col-sm-9">
+                        <input type="text" class="form-control" th:field="*{descrip}"/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Estado</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" th:field="*{estado}">
+                            <option value="">-- Seleccionar --</option>
+                            <option th:each="te : ${turnosestados}"
+                                    th:value="${te.id}"
+                                    th:text="${te.descrip}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">Returno</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" th:field="*{returno}">
+                            <option value="">-- Ninguno --</option>
+                            <option th:each="rt : ${turnosExistentes}"
+                                    th:value="${rt.id}"
+                                    th:text="${rt.fecha + ' - ' + rt.paciente.apellido + ', ' + rt.paciente.nombre}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-9 col-sm-offset-3">
+                        <button type="submit" class="btn btn-success">Guardar turno</button>
+                        <a class="btn btn-default" th:href="@{/turnos(fecha=${fechaSeleccionada})}">Cancelar</a>
+                        <button type="button" th:if="${entity.id != null}" class="btn btn-danger" id="btnAnularTurno">
+                            Anular turno
+                        </button>
+                    </div>
+                </div>
+
+                <h5 style="color:red;" th:text="${message}"></h5>
+            </div>
+
+            <div class="col-sm-5">
+                <div class="panel-horarios">
+                    <h4>Horarios</h4>
+                    <div id="listaHorarios">
+                        <p class="text-muted" id="msgHorarios">Seleccione un profesional para ver los horarios.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <form th:if="${entity.id != null}" id="formAnularTurno"
+          th:action="@{/turnos/anular/{id}(id=${entity.id})}" method="post"></form>
+
+</div>
+
+<div class="modal fade" id="modalPaciente" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">Paciente</h4>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs">
+                    <li class="active"><a data-toggle="tab" href="#tabBuscarPaciente">Buscar</a></li>
+                    <li><a data-toggle="tab" href="#tabNuevoPaciente">Nuevo</a></li>
+                </ul>
+                <div class="tab-content">
+                    <div id="tabBuscarPaciente" class="tab-pane active">
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="buscarApellido" placeholder="Ingrese apellido..."/>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-primary" id="btnBuscarPaciente">Buscar</button>
+                                </span>
+                            </div>
+                        </div>
+                        <table class="table table-bordered table-hover" id="tablaPacientes">
+                            <thead>
+                            <tr>
+                                <th>Apellido</th>
+                                <th>Nombre</th>
+                                <th>Documento</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        <p class="text-muted" id="msgPacientes"></p>
+                    </div>
+                    <div id="tabNuevoPaciente" class="tab-pane">
+                        <div class="form-group">
+                            <label>Tipo de Documento</label>
+                            <select class="form-control" id="nuevoTipoDoc">
+                                <option value="">-- Seleccionar --</option>
+                                <option th:each="tipoDoc : ${tiposdoc}"
+                                        th:value="${tipoDoc.id}"
+                                        th:text="${tipoDoc.codigo}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>DNI</label>
+                            <input type="text" class="form-control" id="nuevoDni"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Apellido</label>
+                            <input type="text" class="form-control" id="nuevoApellido"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Nombre</label>
+                            <input type="text" class="form-control" id="nuevoNombre"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Dirección</label>
+                            <input type="text" class="form-control" id="nuevoDireccion"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="text" class="form-control" id="nuevoTelefono"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Correo Electrónico</label>
+                            <input type="text" class="form-control" id="nuevoEmail"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Observación</label>
+                            <input type="text" class="form-control" id="nuevoObservacion"/>
+                        </div>
+                        <button type="button" class="btn btn-success" id="btnGuardarPaciente">Guardar</button>
+                        <h5 style="color:red;" id="msgNuevoPaciente"></h5>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var urlBuscarPacientes = /*[[@{/turnos/pacientes/buscar}]]*/ '/turnos/pacientes/buscar';
+    var urlCrearPaciente = /*[[@{/turnos/pacientes}]]*/ '/turnos/pacientes';
+    var urlHorarios = /*[[@{/turnos/horarios}]]*/ '/turnos/horarios';
+    var csrfToken = /*[[${_csrf.token}]]*/ '';
+
+    document.getElementById('btnBuscarPaciente').addEventListener('click', buscarPacientes);
+    document.getElementById('btnGuardarPaciente').addEventListener('click', guardarPaciente);
+    document.getElementById('buscarApellido').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarPacientes();
+        }
+    });
+
+    document.getElementById('profesional').addEventListener('change', cargarHorarios);
+
+    function buscarPacientes() {
+        var apellido = document.getElementById('buscarApellido').value.trim();
+        var tbody = document.querySelector('#tablaPacientes tbody');
+        var msg = document.getElementById('msgPacientes');
+        tbody.innerHTML = '';
+        msg.textContent = '';
+
+        if (!apellido) {
+            msg.textContent = 'Ingrese un apellido para buscar.';
+            return;
+        }
+
+        fetch(urlBuscarPacientes + '?apellido=' + encodeURIComponent(apellido))
+            .then(function (r) { return r.json(); })
+            .then(function (lista) {
+                if (!lista || lista.length === 0) {
+                    msg.textContent = 'No se encontraron pacientes.';
+                    return;
+                }
+                lista.forEach(function (p) {
+                    var doc = ((p.tipoDoc || '') + ' ' + (p.dni || '')).trim();
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td>' + (p.apellido || '') + '</td>' +
+                        '<td>' + (p.nombre || '') + '</td>' +
+                        '<td>' + doc + '</td>' +
+                        '<td><button type="button" class="btn btn-xs btn-success">Seleccionar</button></td>';
+                    tr.querySelector('button').addEventListener('click', function () {
+                        seleccionarPaciente(p);
+                    });
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(function () {
+                msg.textContent = 'Error al buscar pacientes.';
+            });
+    }
+
+    function seleccionarPaciente(p) {
+        var doc = ((p.tipoDoc || '') + ' ' + (p.dni || '')).trim();
+        document.getElementById('pacienteId').value = p.id;
+        document.getElementById('pacienteLabelNombre').textContent =
+            (p.apellido || '') + ', ' + (p.nombre || '');
+        document.getElementById('pacienteLabelDoc').textContent = doc;
+        $('#modalPaciente').modal('hide');
+    }
+
+    function guardarPaciente() {
+        var msg = document.getElementById('msgNuevoPaciente');
+        msg.textContent = '';
+        var datos = new URLSearchParams();
+        datos.append('tipoDoc', document.getElementById('nuevoTipoDoc').value);
+        datos.append('dni', document.getElementById('nuevoDni').value);
+        datos.append('apellido', document.getElementById('nuevoApellido').value);
+        datos.append('nombre', document.getElementById('nuevoNombre').value);
+        datos.append('direccion', document.getElementById('nuevoDireccion').value);
+        datos.append('telefono', document.getElementById('nuevoTelefono').value);
+        datos.append('email', document.getElementById('nuevoEmail').value);
+        datos.append('observacion', document.getElementById('nuevoObservacion').value);
+        datos.append('_csrf', csrfToken);
+
+        fetch(urlCrearPaciente, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: datos.toString()
+        })
+            .then(function (r) {
+                return r.json().then(function (body) {
+                    return { ok: r.ok, body: body };
+                });
+            })
+            .then(function (res) {
+                if (!res.ok) {
+                    msg.textContent = (res.body && res.body.message) ? res.body.message : 'No se pudo guardar el paciente.';
+                    return;
+                }
+                document.getElementById('nuevoTipoDoc').value = '';
+                document.getElementById('nuevoDni').value = '';
+                document.getElementById('nuevoApellido').value = '';
+                document.getElementById('nuevoNombre').value = '';
+                document.getElementById('nuevoDireccion').value = '';
+                document.getElementById('nuevoTelefono').value = '';
+                document.getElementById('nuevoEmail').value = '';
+                document.getElementById('nuevoObservacion').value = '';
+                seleccionarPaciente(res.body);
+            })
+            .catch(function () {
+                msg.textContent = 'No se pudo guardar el paciente.';
+            });
+    }
+
+    function cargarHorarios() {
+        var profesionalId = document.getElementById('profesional').value;
+        var fecha = document.getElementById('fecha').value;
+        var contenedor = document.getElementById('listaHorarios');
+        var turnoId = document.getElementById('turnoIdActual').value;
+
+        if (!profesionalId) {
+            contenedor.innerHTML = '<p class="text-muted" id="msgHorarios">Seleccione un profesional para ver los horarios.</p>';
+            return;
+        }
+
+        contenedor.innerHTML = '<p class="text-muted">Cargando horarios...</p>';
+
+        var url = urlHorarios + '?profesionalId=' + encodeURIComponent(profesionalId)
+            + '&fecha=' + encodeURIComponent(fecha);
+        if (turnoId) {
+            url += '&turnoId=' + encodeURIComponent(turnoId);
+        }
+
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (lista) {
+                contenedor.innerHTML = '';
+                if (!lista || lista.length === 0) {
+                    contenedor.innerHTML = '<p class="text-muted">No hay horarios asignados a este profesional para el día seleccionado.</p>';
+                    return;
+                }
+
+                lista.forEach(function (h) {
+                    var div = document.createElement('div');
+                    div.className = 'horario-item ' + (h.ocupado ? 'ocupado' : 'disponible');
+                    div.innerHTML =
+                        '<span class="horario-texto">' + (h.horario || '') + '</span>' +
+                        '<span class="horario-estado ' + (h.ocupado ? 'no' : 'ok') + '">' +
+                        (h.ocupado ? 'Ocupado' : 'Disponible') +
+                        '</span>';
+                    contenedor.appendChild(div);
+                });
+            })
+            .catch(function () {
+                contenedor.innerHTML = '<p class="text-danger">Error al cargar horarios.</p>';
+            });
+    }
+
+    document.getElementById('formTurno').addEventListener('submit', function (e) {
+        if (!document.getElementById('pacienteId').value) {
+            e.preventDefault();
+            alert('Debe seleccionar un paciente.');
+        }
+    });
+
+    var btnAnular = document.getElementById('btnAnularTurno');
+    if (btnAnular) {
+        btnAnular.addEventListener('click', function () {
+            if (confirm('¿Seguro que desea anular este turno?')) {
+                document.getElementById('formAnularTurno').submit();
+            }
+        });
+    }
+
+    if (document.getElementById('profesional').value) {
+        cargarHorarios();
+    }
+    /*]]>*/
+</script>
+
+</body>
+</html>

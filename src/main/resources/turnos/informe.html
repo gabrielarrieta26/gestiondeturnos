@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+<body>
+
+<div class="container">
+
+    <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+    <div th:replace="~{header :: breadcrumb('Reportes', 'Informe de turnos')}"></div>
+
+    <h2>Informe de turnos</h2>
+    <p class="cancelar-lead">Genera un PDF con los turnos del período. Incluye paciente, obra social, fecha, hora y profesional. Los turnos anulados no entran.</p>
+
+    <form class="form-horizontal" th:action="@{/turnos/informe}" method="post">
+
+        <div class="cancelar-aviso cancelar-error" th:if="${errores != null and !errores.isEmpty()}">
+            <strong>No se puede continuar</strong>
+            <ul>
+                <li th:each="error : ${errores}" th:text="${error}"></li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="desde">Desde</label>
+            <div class="col-sm-4">
+                <input type="date" class="form-control" id="desde" name="desde" required="required" th:value="${desde}"/>
+            </div>
+            <label class="col-sm-2 control-label" for="hasta">Hasta</label>
+            <div class="col-sm-4">
+                <input type="date" class="form-control" id="hasta" name="hasta" required="required" th:value="${hasta}"/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-success">Generar PDF</button>
+            </div>
+        </div>
+    </form>
+
+    <iframe th:if="${mostrarPdf}" class="informe-pdf"
+            th:src="@{/turnos/informe/pdf(desde=${desde},hasta=${hasta})}"
+            title="Informe de turnos"></iframe>
+
+</div>
+
+</body>
+</html>

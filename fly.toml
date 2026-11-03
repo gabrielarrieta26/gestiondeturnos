@@ -1,0 +1,50 @@
+# Configuración de la app Spring Boot en Fly.io
+# Cambiá "app" si el nombre "gestionturnos" ya está en uso.
+app = "gestionturnos"
+primary_region = "gru"
+
+kill_signal = "SIGTERM"
+kill_timeout = 30
+swap_size_mb = 512
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8091"
+  CONTEXT_PATH = "/gestionturnos"
+  # Nombre de la app MySQL dentro de la red privada de Fly.io (6PN)
+  DB_HOST = "gestionturnos-db.internal"
+  DB_PORT = "3306"
+  DB_NAME = "gestionturnos"
+  DB_USER = "gestionturnos"
+  DB_TIMEZONE = "America/Argentina/Buenos_Aires"
+  JPA_DDL_AUTO = "update"
+  JPA_SHOW_SQL = "false"
+  # La app se sirve por HTTPS detrás del proxy de Fly.io
+  SESSION_COOKIE_SECURE = "true"
+  TZ = "America/Argentina/Buenos_Aires"
+
+[http_service]
+  internal_port = 8091
+  force_https = true
+  # Una sola máquina: las sesiones de Spring Security viven en memoria.
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 50
+    hard_limit = 100
+
+[[http_service.checks]]
+  grace_period = "60s"
+  interval = "15s"
+  timeout = "5s"
+  method = "GET"
+  path = "/gestionturnos/actuator/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"

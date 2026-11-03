@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head lang="es"></head>
+    <body>
+
+        <div th:fragment="header" class="clinic-header">
+            <div class="clinic-session" th:if="${usuarioActual != null}">
+                <span class="clinic-user-label" th:text="${usuarioActual}">usuario</span>
+                <select class="clinic-rol-select" aria-label="Roles"
+                        th:if="${rolesCreados != null and !rolesCreados.isEmpty()}"
+                        onchange="if (this.value) window.location = this.value">
+                    <option value="">Roles</option>
+                    <option th:each="rol : ${rolesCreados}"
+                            th:value="@{/sesion/rol/{id}(id=${rol.id})}"
+                            th:text="${rol.descrip}">Administrador</option>
+                </select>
+                <form th:action="@{/logout}" method="post" class="clinic-logout-form">
+                    <button type="submit">Salir</button>
+                </form>
+            </div>
+
+            <div class="clinic-topbar">
+            <a class="clinic-brand" th:href="@{/}">
+                <span class="clinic-brand-name">Gestión de Turnos</span>
+                <span class="clinic-brand-tag">Clínica</span>
+            </a>
+
+            <nav class="navbar navbar-default">
+                <div class="container-fluid">
+                    <ul class="nav navbar-nav">
+                        <li><a th:href="@{/}">Inicio</a></li>
+
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#">Operaciones
+                                <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a th:href="@{/turnos}">Turnos</a></li>
+                                <li><a th:href="@{/turnos/estados}">Estados de Turnos</a></li>
+                                <li th:if="${esAdministrador}"><a th:href="@{/turnos/cancelar-dia}">Cancelar día</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#">Reportes
+                                <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a th:href="@{/turnos/informe}">Informe de turnos</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#">Definiciones
+                                <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a th:href="@{/turnosgenerales}">Turnos Generales</a></li>
+                                <li><a th:href="@{/turnosprofesionales}">Turnos Profesionales</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#">Archivo
+                                <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a th:href="@{/pacientes}">Pacientes</a></li>
+                                <li><a th:href="@{/profesionales}">Profesionales</a></li>
+                                <li><a th:href="@{/obrassociales}">Obras Sociales</a></li>
+                                <li><a th:href="@{/especialidades}">Especialidades</a></li>
+                                <li><a th:href="@{/tiposdoc}">Tipos de Documentos</a></li>
+                                <li><a th:href="@{/dias}">Días</a></li>
+                                <li><a th:href="@{/horarios}">Horarios</a></li>
+                                <li><a th:href="@{/turnosestados}">Turnos Estados</a></li>
+                            </ul>
+                        </li>
+
+                        <li class="dropdown" th:if="${esAdministrador}">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#">General
+                                <span class="caret"></span></a>
+                            <ul class="dropdown-menu">
+                                <li><a th:href="@{/usuarios}">Usuarios</a></li>
+                                <li><a th:href="@{/roles}">Roles</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <a class="clinic-cta" th:href="@{/turnos}">Turnos</a>
+                </div>
+            </nav>
+            </div>
+        </div>
+
+        <div th:fragment="breadcrumb(seccion, pagina)">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li><a th:href="@{/}">Inicio</a></li>
+                    <li th:text="${seccion}">Categoría</li>
+                    <li class="active" aria-current="page" th:text="${pagina}">Página</li>
+                </ol>
+            </nav>
+        </div>
+
+    </body>
+</html>

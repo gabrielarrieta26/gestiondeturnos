@@ -1,0 +1,17 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+    <!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+    <body>
+        <div class="container">
+            <th:block th:insert="~{header :: header}"></th:block>
+
+            <section class="denied-wrap">
+                <h1>Acceso denegado</h1>
+                <p class="login-lead">Tu usuario no tiene permiso para entrar a esta sección. La administración de usuarios y roles está reservada al administrador.</p>
+                <a class="home-cta" th:href="@{/}">Volver al inicio</a>
+            </section>
+        </div>
+    </body>
+</html>

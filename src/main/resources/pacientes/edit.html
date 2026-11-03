@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+    
+    <!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+    <body>
+
+        <div class="container">
+
+            <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+            
+            <!-- ============================================================= -->
+            <!-- Inicio Zona de Ajuste -->
+
+            <h2>Paciente</h2>
+            <div>
+                <form class="form-horizontal" th:object="${entity}" th:action="@{/pacientes}" method="post">
+                    <input type="hidden" th:field="*{id}"/>
+
+                    <div class="form-group">
+                        <div class="col-sm-2 control-label">
+                            <label align="right" >Tipo de Documento</label>
+                        </div>
+                        <div class="col-sm-10">
+                            <select  class="form-control" th:field="${entity.tipoDoc}" >
+                                <option th:each="tipoDoc : ${tiposdoc}"
+                                        th:value="${tipoDoc.id}"
+                                        th:selected="${tipoDoc.id}"
+                                        th:text="${tipoDoc.codigo}"/>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">DNI</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{dni}"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Apellido</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{apellido}"/>
+                        </div>                       
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Nombre</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{nombre}"/>
+                        </div>                       
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Dirección</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{direccion}"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Teléfono</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{telefono}"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Correo Electrónico</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{email}"/>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">Observación</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" th:field="*{observacion}"/>
+                        </div>
+                    </div>
+                                                           
+                    <div class="row">
+                        <button type="submit" class="btn btn-success">Guardar</button>
+                        <a class="btn btn-default" th:href="${'/gestionturnos/pacientes'}">Cancelar</a>
+                    </div>
+                    <h5 style="color:red;" th:text="${message}"></h5>
+                </form>
+            </div>
+            
+            <!-- Fin Zona de Ajuste -->
+
+        </div>
+
+    </body>
+</html>

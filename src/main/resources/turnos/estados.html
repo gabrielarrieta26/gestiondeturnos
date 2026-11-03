@@ -1,0 +1,89 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+<style>
+    .estados-filtro .form-control { width: auto; }
+    .estados-filtro label { margin: 0; font-weight: 600; }
+</style>
+
+<body>
+
+<div class="container">
+
+    <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+    <div th:replace="~{header :: breadcrumb('Operaciones', 'Estados de Turnos')}"></div>
+
+    <form class="index-toolbar estados-filtro" th:action="@{/turnos/estados}" method="get">
+        <label for="desde">Desde</label>
+        <input type="date" class="form-control" id="desde" name="desde" required
+               th:value="${#temporals.format(desde, 'yyyy-MM-dd')}"/>
+        <label for="hasta">Hasta</label>
+        <input type="date" class="form-control" id="hasta" name="hasta" required
+               th:value="${#temporals.format(hasta, 'yyyy-MM-dd')}"/>
+        <button type="submit" class="btn btn-success">Buscar</button>
+        <button type="button" class="btn btn-default" onclick="seleccionarTurnos(true)">Todos</button>
+        <button type="button" class="btn btn-default" onclick="seleccionarTurnos(false)">Ninguno</button>
+    </form>
+
+    <form th:action="@{/turnos/estados}" method="post">
+        <input type="hidden" name="desde" th:value="${#temporals.format(desde, 'yyyy-MM-dd')}"/>
+        <input type="hidden" name="hasta" th:value="${#temporals.format(hasta, 'yyyy-MM-dd')}"/>
+
+        <div class="form-group">
+            <label for="estadoId">Estado</label>
+            <select class="form-control" id="estadoId" name="estadoId" style="max-width: 360px;">
+                <option value="">-- Seleccionar --</option>
+                <option th:each="te : ${turnosestados}"
+                        th:value="${te.id}"
+                        th:text="${te.descrip}"
+                        th:selected="${estadoId != null and estadoId.equals(te.id)}"></option>
+            </select>
+        </div>
+
+        <div th:if="${busqueda and not #lists.isEmpty(turnos)}">
+            <table class="table" width="100%">
+                <tr>
+                    <th></th>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Paciente</th>
+                    <th>Profesional</th>
+                    <th>Estado</th>
+                </tr>
+                <tr th:each="entity : ${turnos}">
+                    <td>
+                        <input type="checkbox" name="turnoIds" th:value="${entity.id}"
+                               th:checked="${turnoIds != null and turnoIds.contains(entity.id)}"/>
+                    </td>
+                    <td th:text="${entity.fecha}"></td>
+                    <td th:text="${entity.turnoGeneral != null and entity.turnoGeneral.horario != null ? entity.turnoGeneral.horario.descrip : ''}"></td>
+                    <td th:text="${entity.paciente != null ? entity.paciente.apellido + ', ' + entity.paciente.nombre : ''}"></td>
+                    <td th:text="${entity.profesional != null ? entity.profesional.apellido + ', ' + entity.profesional.nombre : ''}"></td>
+                    <td th:text="${entity.estado != null ? entity.estado.descrip : ''}"></td>
+                </tr>
+            </table>
+        </div>
+
+        <p th:if="${busqueda and #lists.isEmpty(turnos)}">No hay turnos en el rango seleccionado.</p>
+
+        <div class="row">
+            <button type="submit" class="btn btn-success">Guardar</button>
+        </div>
+        <h5 style="color:red;" th:text="${message}"></h5>
+    </form>
+
+</div>
+
+<script>
+    function seleccionarTurnos(marcar) {
+        var boxes = document.querySelectorAll('input[name="turnoIds"]');
+        for (var i = 0; i < boxes.length; i++) {
+            boxes[i].checked = marcar;
+        }
+    }
+</script>
+
+</body>
+</html>

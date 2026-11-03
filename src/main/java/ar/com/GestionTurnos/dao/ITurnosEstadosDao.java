@@ -1,0 +1,21 @@
+package ar.com.GestionTurnos.dao;
+
+import ar.com.GestionTurnos.entities.TurnosEstados;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ITurnosEstadosDao extends JpaRepository<TurnosEstados, Long> {
+    @Query("select c from TurnosEstados c where c.descrip like ?1")
+    List<TurnosEstados> findByDescripActivo(String name);
+
+    @Query("select c from TurnosEstados c where c.inhabilitar is false")
+    List<TurnosEstados> findAllActivos();
+
+    Page<TurnosEstados> findAll(Pageable pageable);
+}

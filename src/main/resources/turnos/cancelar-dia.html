@@ -1,0 +1,190 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+<body>
+
+<div class="container">
+
+    <!--/*/ <th:block th:insert="~{header :: header}"></th:block> /*/-->
+    <div th:replace="~{header :: breadcrumb('Operaciones', 'Cancelar día')}"></div>
+
+    <h2>Cancelar día</h2>
+    <p class="cancelar-lead">Anula los turnos pendientes y confirmados de un período, según el rol y, si hace falta, usuarios puntuales. Los atendidos y los ya cancelados no se modifican.</p>
+
+    <div class="cancelar-aviso cancelar-ok" th:if="${mensajeOk}" th:text="${mensajeOk}"></div>
+
+    <form class="form-horizontal" th:action="@{/turnos/cancelar-dia}" method="post" th:object="${criterio}">
+
+        <div class="cancelar-aviso cancelar-error" th:if="${criterio.errores != null and !criterio.errores.isEmpty()}">
+            <strong>No se puede continuar</strong>
+            <ul>
+                <li th:each="error : ${criterio.errores}" th:text="${error}"></li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="desde">Desde</label>
+            <div class="col-sm-4">
+                <input type="date" class="form-control" id="desde" name="desde" required="required" th:value="*{desdeTexto}"/>
+            </div>
+            <label class="col-sm-2 control-label" for="hasta">Hasta</label>
+            <div class="col-sm-4">
+                <input type="date" class="form-control" id="hasta" name="hasta" required="required" th:value="*{hastaTexto}"/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="horaDesde">Hora desde</label>
+            <div class="col-sm-4">
+                <input type="time" class="form-control" id="horaDesde" name="horaDesde" th:value="*{horaDesdeTexto}"/>
+            </div>
+            <label class="col-sm-2 control-label" for="horaHasta">Hora hasta</label>
+            <div class="col-sm-4">
+                <input type="time" class="form-control" id="horaHasta" name="horaHasta" th:value="*{horaHastaTexto}"/>
+            </div>
+        </div>
+        <p class="cancelar-ayuda col-sm-offset-2">Las horas son opcionales. Si quedan vacías, se cancela el día completo.</p>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Roles</label>
+            <div class="col-sm-10">
+                <label class="cancelar-opcion">
+                    <input type="radio" name="alcanceRoles" value="todos" th:checked="*{todosLosRoles}"/>
+                    Todos los roles
+                </label>
+                <label class="cancelar-opcion">
+                    <input type="radio" name="alcanceRoles" value="elegir" th:checked="*{!todosLosRoles}"/>
+                    Elegir roles
+                </label>
+                <div id="rolesBox">
+                    <label class="cancelar-check" th:each="rol : ${roles}">
+                        <input type="checkbox" name="rolIds" th:value="${rol.id}"
+                               th:checked="${criterio.rolIds != null and #lists.contains(criterio.rolIds, rol.id)}"/>
+                        <span th:text="${rol.descrip}">Rol</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label">Usuarios</label>
+            <div class="col-sm-10">
+                <label class="cancelar-opcion">
+                    <input type="radio" name="alcanceUsuarios" value="todos" th:checked="*{todosLosUsuarios}"/>
+                    Todos los del rol
+                </label>
+                <label class="cancelar-opcion">
+                    <input type="radio" name="alcanceUsuarios" value="elegir" th:checked="*{!todosLosUsuarios}"/>
+                    Usuarios individuales
+                </label>
+                <div id="usuariosBox">
+                    <label class="cancelar-check cancelar-usuario" th:each="usuario : ${usuarios}" th:attr="data-rol=${usuario.rol.id}">
+                        <input type="checkbox" name="usuarioIds" th:value="${usuario.id}"
+                               th:checked="${criterio.usuarioIds != null and #lists.contains(criterio.usuarioIds, usuario.id)}"/>
+                        <span th:text="${usuario.username}">usuario</span>
+                        <span class="cancelar-rol" th:text="${usuario.rol.descrip}">rol</span>
+                        <span class="cancelar-rol" th:if="${usuario.inactivo}">inactivo</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="motivo">Motivo</label>
+            <div class="col-sm-10">
+                <textarea id="motivo" name="motivo" class="form-control" rows="3" required="required"
+                          placeholder="Feriado, ausencia del profesional, cierre de sala…" th:text="*{motivo}"></textarea>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" name="accion" value="revisar" class="btn btn-success">Revisar bajas</button>
+            </div>
+        </div>
+
+        <div th:if="*{revisado}">
+            <div class="cancelar-aviso" th:if="*{aCancelar.isEmpty()}">
+                Con este período y este alcance no hay turnos pendientes ni confirmados. Los atendidos y los ya cancelados no se modifican.
+            </div>
+
+            <div class="cancelar-aviso cancelar-peligro" th:if="*{agendaCompleta and !aCancelar.isEmpty()}">
+                <strong>Agenda completa.</strong>
+                Está por cancelar todos los roles y todos los usuarios del período. No hay un filtro que limite la baja.
+            </div>
+
+            <div class="cancelar-aviso cancelar-alerta" th:if="*{!aCancelar.isEmpty()}">
+                <strong th:text="${criterio.aCancelar.size() == 1 ? 'Se dará de baja 1 turno' : 'Se darán de baja ' + criterio.aCancelar.size() + ' turnos'}">Se darán de baja</strong>
+                <p th:text="'Período ' + ${criterio.periodoTexto} + '. ' + ${criterio.atendidos} + ' atendidos y ' + ${criterio.yaCancelados} + ' ya cancelados quedan fuera.'"></p>
+                <p th:if="*{sinUsuario > 0 and !agendaCompleta}"
+                   th:text="${criterio.sinUsuario} + ' turnos de profesionales sin usuario no entran en el filtro por rol.'"></p>
+            </div>
+
+            <table class="table" th:if="*{!aCancelar.isEmpty()}">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Paciente</th>
+                    <th>Profesional</th>
+                    <th>Usuario</th>
+                    <th>Estado</th>
+                </tr>
+                <tr th:each="turno : *{aCancelar}">
+                    <td th:text="${#temporals.format(turno.fecha, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${turno.turnoGeneral != null and turno.turnoGeneral.horario != null ? turno.turnoGeneral.horario.descrip : ''}"></td>
+                    <td th:text="${turno.paciente != null ? turno.paciente.apellido + ', ' + turno.paciente.nombre : ''}"></td>
+                    <td th:text="${turno.profesional != null ? turno.profesional.apellido + ', ' + turno.profesional.nombre : ''}"></td>
+                    <td th:text="${turno.profesional != null and turno.profesional.usuario != null ? turno.profesional.usuario.username : ''}"></td>
+                    <td th:text="${turno.estado != null ? turno.estado.descrip : ''}"></td>
+                </tr>
+            </table>
+
+            <div class="form-group" th:if="*{!aCancelar.isEmpty()}">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <label class="cancelar-check">
+                        <input type="checkbox" name="confirmar" value="true"/>
+                        Confirmo que revisé la cantidad y deseo cancelar estos turnos.
+                    </label>
+                    <div class="cancelar-acciones">
+                        <button type="submit" name="accion" value="confirmar" class="btn btn-danger">Confirmar cancelación</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+</div>
+
+<script>
+    function actualizarCancelacion() {
+        var rolesTodos = document.querySelector('input[name="alcanceRoles"]:checked').value === 'todos';
+        var usuariosTodos = document.querySelector('input[name="alcanceUsuarios"]:checked').value === 'todos';
+        document.getElementById('rolesBox').style.display = rolesTodos ? 'none' : 'block';
+        document.getElementById('usuariosBox').style.display = usuariosTodos ? 'none' : 'block';
+
+        var roles = [];
+        document.querySelectorAll('input[name="rolIds"]:checked').forEach(function (input) {
+            roles.push(input.value);
+        });
+        document.querySelectorAll('.cancelar-usuario').forEach(function (fila) {
+            var visible = rolesTodos || roles.indexOf(fila.getAttribute('data-rol')) >= 0;
+            fila.style.display = visible ? '' : 'none';
+            if (!visible) {
+                var check = fila.querySelector('input');
+                if (check) {
+                    check.checked = false;
+                }
+            }
+        });
+    }
+
+    document.querySelectorAll('input[name="alcanceRoles"], input[name="alcanceUsuarios"], input[name="rolIds"]').forEach(function (input) {
+        input.addEventListener('change', actualizarCancelacion);
+    });
+    actualizarCancelacion();
+</script>
+
+</body>
+</html>

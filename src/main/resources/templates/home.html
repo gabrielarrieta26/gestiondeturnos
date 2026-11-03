@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+    <!--/*/ <th:block th:insert="~{top :: top}"></th:block> /*/-->
+
+    <body>
+
+        <div class="container">
+
+            <th:block th:insert="~{header :: header}"></th:block>
+
+            <div class="home-intro">
+                <section class="home-hero">
+                    <span class="home-eyebrow">Clínica</span>
+                    <h1 class="home-brand">Gestión de Turnos</h1>
+                    <p class="home-lead">
+                        Agenda clara para pacientes, profesionales y disponibilidad. Diseñada para el ritmo diario de la clínica.
+                    </p>
+                    <a class="home-cta" th:href="@{/turnos}">Abrir calendario</a>
+                </section>
+
+                <aside class="obras-card" th:if="${obrasSuspendidas != null and !obrasSuspendidas.isEmpty()}">
+                    <h2>Obras sociales suspendidas</h2>
+                    <ul class="obras-suspendidas">
+                        <li th:each="obra : ${obrasSuspendidas}">
+                            <span class="obras-suspendidas-codigo" th:text="${obra.codigo}">Código</span>
+                            <form th:action="@{/obrassociales/{id}/activar(id=${obra.id})}" method="post">
+                                <button type="submit" class="btn obras-activar">Activar</button>
+                            </form>
+                        </li>
+                    </ul>
+                </aside>
+            </div>
+
+            <div class="home-actions">
+                <a class="home-action" th:href="@{/pacientes}">
+                    <h3>Pacientes</h3>
+                    <p>Fichas y búsqueda</p>
+                </a>
+                <a class="home-action" th:href="@{/profesionales}">
+                    <h3>Profesionales</h3>
+                    <p>Equipo médico</p>
+                </a>
+                <a class="home-action" th:href="@{/turnosprofesionales}">
+                    <h3>Disponibilidad</h3>
+                    <p>Horarios por día</p>
+                </a>
+            </div>
+
+        </div>
+
+    </body>
+</html>
